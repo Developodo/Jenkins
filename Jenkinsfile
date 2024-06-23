@@ -1,27 +1,70 @@
 pipeline {
     agent any
-    options {
-       // disableConcurrentBuilds() // Esta línea evita que se ejecuten múltiples builds simultáneamente
+    
+    environment {
+        APP_PID_FILE = '.pidfile'
     }
-     stages {
+    
+    stages {
         stage('Build') {
             steps {
-                sh 'npm install'
+                script {
+                    // Instalar dependencias usando npm
+                    sh 'npm install'
+                    
+                    // Ejecutar el build de la aplicación React
+                    sh 'npm run build'
+                }
             }
         }
-        stage('Deliver') {
+        stage('Run App') {
             steps {
-// Primero, intentamos detener cualquier build anterior si está en ejecución
-                    def runningBuild = currentBuild.rawBuild.getExecutor().getCauseOfDeath()
-                    if (runningBuild != null && runningBuild.isCancelable()) {
-                        echo "Stopping previous build..."
-                        currentBuild.rawBuild.getExecutor().interrupt(Result.ABORTED)
-                    }
-                sh 'chmod -R +rwx ./jenkins/scripts/deliver.sh'
-                sh 'chmod -R +rwx ./jenkins/scripts/kill.sh'
-                sh './jenkins/scripts/deliver.sh'
-                input message: 'Finished using the web site? (Click "Proceed" to continue)'
-                sh './jenkins/scripts/kill.sh'
+                script {
+                    // Ejecutar la aplicación de React
+                    sh 'npm start & echo $! > ${APP_PID_FILE}'
+                    echo 'Node.js/React application started.'
+                }
+            }
+        }
+    }
+    
+    post {
+        always {
+            script {
+                // Al finalizar el pipeline, no detenemos la aplicación
+                echo 'Pipeline finished. The Node.js/React application is still running.'
+            }
+        }
+    }
+    
+    // Cancelar el build anterior si se inicia uno nuevo
+    options {
+        disableConcurrentBuilds()
+    }
+    
+    // Manejar la detención del build anterior y reiniciar la aplicación
+    post {
+        success {
+            script {
+                // Detener la aplicación al finalizar el pipeline
+                if (fileExists(APP_PID_FILE)) {
+                    def pid = readFile(APP_PID_FILE).trim()
+                    sh "kill ${pid}"
+                    echo "Stopped Node.js/React application with PID ${pid}."
+                    sh "rm ${APP_PID_FILE}"
+                }
+            }
+        }
+        
+        aborted {
+            script {
+                // Si el build es abortado, detener la aplicación
+                if (fileExists(APP_PID_FILE)) {
+                    def pid = readFile(APP_PID_FILE).trim()
+                    sh "kill ${pid}"
+                    echo "Stopped Node.js/React application with PID ${pid} due to build abortion."
+                    sh "rm ${APP_PID_FILE}"
+                }
             }
         }
     }
