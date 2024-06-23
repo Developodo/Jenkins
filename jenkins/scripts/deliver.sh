@@ -4,7 +4,7 @@
 npm run build
 
 # Instalar pm2 si no está instalado (esto se puede omitir si ya está instalado globalmente)
-# npm install -g pm2
+npm install -g pm2
 
 # Iniciar la aplicación usando pm2
 pm2 start npm --name "jenkins-app" -- start
