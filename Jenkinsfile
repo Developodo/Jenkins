@@ -1,5 +1,8 @@
 pipeline {
     agent any
+    options {
+        disableConcurrentBuilds() // Esta línea evita que se ejecuten múltiples builds simultáneamente
+    }
     stages {
         stage('Build') {
             steps {
