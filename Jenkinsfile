@@ -29,24 +29,9 @@ pipeline {
     }
     
     post {
-        always {
-            script {
-                // Al finalizar el pipeline, no detenemos la aplicación
-                echo 'Pipeline finished. The Node.js/React application is still running.'
-            }
-        }
-    }
-    
-    // Cancelar el build anterior si se inicia uno nuevo
-    options {
-        disableConcurrentBuilds()
-    }
-    
-    // Manejar la detención del build anterior y reiniciar la aplicación
-    post {
         success {
             script {
-                // Detener la aplicación al finalizar el pipeline
+                // Al finalizar exitosamente el pipeline, detener la aplicación Node.js/React
                 if (fileExists(APP_PID_FILE)) {
                     def pid = readFile(APP_PID_FILE).trim()
                     sh "kill ${pid}"
@@ -58,7 +43,7 @@ pipeline {
         
         aborted {
             script {
-                // Si el build es abortado, detener la aplicación
+                // Si el build es abortado, detener la aplicación Node.js/React
                 if (fileExists(APP_PID_FILE)) {
                     def pid = readFile(APP_PID_FILE).trim()
                     sh "kill ${pid}"
@@ -67,5 +52,17 @@ pipeline {
                 }
             }
         }
+        
+        always {
+            script {
+                // Mostrar mensaje de finalización del pipeline
+                echo 'Pipeline finished. The Node.js/React application is still running.'
+            }
+        }
+    }
+    
+    // Cancelar el build anterior si se inicia uno nuevo
+    options {
+        disableConcurrentBuilds()
     }
 }
