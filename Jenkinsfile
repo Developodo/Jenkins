@@ -1,18 +1,17 @@
 pipeline {
-    agent any
-    stages {
-        stage('Build') {
+     agent any
+     stages {
+        stage("Build") {
             steps {
-                sh 'npm install'
+                sh "npm install"
+                sh "npm run build"
             }
         }
-        stage('Deliver') {
+        stage("Deploy") {
             steps {
-                sh 'chmod -R +rwx ./jenkins/scripts/deliver.sh'
-                sh 'chmod -R +rwx ./jenkins/scripts/kill.sh'
-                sh './jenkins/scripts/deliver.sh'
-                input message: 'Finished using the web site? (Click "Proceed" to continue)'
-                sh './jenkins/scripts/kill.sh'
+                sh "rm -rf /var/www/app"
+                sh "mkdir /var/www/app"
+		sh "cp -r ${WORKSPACE}/build/ /var/www/app/"
             }
         }
     }
