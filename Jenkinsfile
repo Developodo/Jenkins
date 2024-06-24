@@ -9,9 +9,9 @@ pipeline {
         }
         stage("Deploy") {
             steps {
-                sh "rm -rf /var/www/app"
-                sh "mkdir /var/www/app"
-		sh "cp -r ${WORKSPACE}/build/ /var/www/app/"
+                sh "rm -rf /var/www/html/app"
+                sh "mkdir /var/www/html/app"
+		sh "cp -r ${WORKSPACE}/build/ /var/www/html/app/"
             }
         }
     }
